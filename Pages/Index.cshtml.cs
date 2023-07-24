@@ -142,6 +142,6 @@ public class IndexModel : PageModel
     {
         public int SuccessCount { get; set; }
         public int FailureCount { get; set; }
-        public byte[] ExcelFile { get; set; }
+        public byte[] ?ExcelFile { get; set; }
     }
 }

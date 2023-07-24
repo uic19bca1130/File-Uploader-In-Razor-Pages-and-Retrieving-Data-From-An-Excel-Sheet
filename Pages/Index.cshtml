@@ -1,0 +1,107 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<style>
+    /* Custom 3D-style button styling */
+    .custom-button {
+        background-color: #3498db;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        box-shadow: 0px 2px 3px rgba(0,0,0,0.3);
+    }
+
+       /* Styling for file uploader */
+    .custom-file-uploader {
+        font-family: Arial, sans-serif; /* Change the font */
+    }
+</style>
+
+<nav class="navbar navbar-dark bg-primary">
+    <a class="navbar-brand" href="#">File Uploader In Razor Pages and Retrieving Data From An Excel Sheet</a>
+</nav>
+
+<div class="container mt-4">
+    <div class="text-center">
+        <h1 class="display-4">FILE UPLOADER 😊</h1>
+    </div>
+    <!-- Rest of your existing file uploader code -->
+</div>
+
+<form method="post" enctype="multipart/form-data" id="uploadForm">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Add the custom CSS classes for styling -->
+            <input type="file" id="fUpload" name="files" multiple class="form-control custom-file-uploader" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12" style="padding-top:10px;">
+            <!-- Use the custom-button class for 3D-style button -->
+            <input type="button" id="btnUpload" value="Upload" class="custom-button" />
+        </div>
+    </div>
+</form>
+
+<div id="message"></div>
+<div id="downloadLink" style="display: none;">
+    <a id="errorExcelLink" download="FailureRecords.xlsx">
+        <i class="fas fa-download"></i> Download Error File
+    </a>
+</div>
+
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.getElementById("btnUpload").addEventListener("click", async () => {
+        const fileInput = document.getElementById("fUpload");
+        const files = fileInput.files;
+        if (files.length === 0) {
+            alert("Please select a file.");
+            return;
+        }
+
+        const formData = new FormData();
+        for (const file of files) {
+            formData.append("files", file);
+        }
+
+        try {
+            const response = await fetch("/Index?handler=Upload", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("File upload failed.");
+            }
+
+            const result = await response.json();
+            const messageElement = document.getElementById("message");
+            messageElement.innerText = `Error File Count: ${result.failureCount}, Success File Count: ${result.successCount}`;
+
+            const downloadLinkElement = document.getElementById("downloadLink");
+            downloadLinkElement.innerHTML = "";
+
+            if (result.failureCount > 0) {
+                const downloadLink = document.createElement("a");
+                downloadLink.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + result.excelFile;
+                downloadLink.download = "FailureRecords.xlsx";
+                downloadLink.innerText = "Download Error File";
+                downloadLinkElement.appendChild(downloadLink);
+                downloadLinkElement.style.display = "block";
+            } else {
+                downloadLinkElement.style.display = "none";
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+</script>
